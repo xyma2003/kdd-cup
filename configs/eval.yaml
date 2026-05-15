@@ -1,0 +1,15 @@
+dataset:
+  root_path: /input
+
+agent:
+  model: ""
+  api_base: ""
+  api_key: ""
+  max_steps: 16
+  temperature: 0.0
+
+run:
+  output_dir: /tmp/eval_staging
+  run_id: run
+  max_workers: 2
+  task_timeout_seconds: 1800
