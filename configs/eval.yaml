@@ -11,5 +11,5 @@ agent:
 run:
   output_dir: /tmp/eval_staging
   run_id: run
-  max_workers: 2
+  max_workers: 4
   task_timeout_seconds: 1800

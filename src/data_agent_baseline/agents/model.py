@@ -88,7 +88,7 @@ class OpenAIModelAdapter:
         client = OpenAI(
             api_key=self.api_key,
             base_url=self.api_base,
-            timeout=180.0,  # 180s: thinking mode needs extra time for reasoning
+            timeout=600.0,  # 600s: thinking mode needs extra time for reasoning
         )
 
         model_lower = self.model.lower()
@@ -126,7 +126,10 @@ class OpenAIModelAdapter:
                 last_exc = None
                 break
             except APITimeoutError as exc:
-                raise RuntimeError(f"LLM call timed out after 180s: {exc}") from exc
+                if attempt < 1:
+                    time.sleep(10)
+                    continue
+                raise RuntimeError(f"LLM call timed out after 600s (2 attempts): {exc}") from exc
             except APIError as exc:
                 last_exc = exc
                 if hasattr(exc, "status_code") and exc.status_code == 429:
