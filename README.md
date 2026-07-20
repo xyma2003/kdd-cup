@@ -12,6 +12,43 @@ English | [中文](README.zh.md)
 
 > Official starter kit for the KDD Cup 2026 DataAgent-Bench challenge. The repository reads tasks from `data/public/input/` and writes predictions for downstream evaluation.
 
+---
+
+## My Implementation (`react` branch)
+
+This is a fork of the official starter kit. My custom ReAct agent lives on the [`react`](../../tree/react) branch and includes the following enhancements over the baseline:
+
+### What I changed
+
+- **Context preloading**: Inject file list, CSV headers, SQLite schemas, JSON structures, and doc previews into the first step so the agent starts with a complete data map instead of blindly exploring.
+- **Hardened JSON parser**: Multi-layer fault-tolerant parser strips ```` ```json ```` fences, extracts bare JSON objects via regex, and rejects multi-object responses — surviving malformed model outputs that broke the baseline.
+- **Self-Verifier for SQL results**: LLM sanity-checks SQL result shapes (empty, wrong column count, row explosion) and regenerates with diagnostics. Conservative triggers — never fires on aggregate queries (`COUNT`/`SUM`/`AVG` without `GROUP BY`) where 1 row is correct.
+- **Detailed prompt rules** (from `zing` branch + my additions): column pruning, tied-rows via `WHERE value = MIN(value)` instead of `LIMIT 1`, no `ROUND` for precision, regex-based doc extraction, 7 WRONG/CORRECT examples.
+- **Reflection + retry loop**: On step failure, feed the error back to the model with a reflection prompt — usually recovers within 1-2 retries.
+- **Token budget guards**: Soft warning at 50K chars, hard force-answer at 250K, force answer on last 2 steps, force answer after 5 consecutive errors. Prevents the 30-step loop from burning tokens on stuck states.
+
+### Results
+
+- **Public demo set**: ~32 / 50 (Qwen3.5-35B via SiliconFlow)
+- Baseline ReAct: ~16% — root cause was a `use_xyma=False` CLI bug + weak default model; once fixed, my prompt + context preloading alone took it to ~28%, and thinking mode added the remaining +4.
+
+### Files changed (vs. baseline)
+
+| File | What |
+|------|------|
+| `src/data_agent_baseline/agents/react.py` | ReAct loop with retry, token budget, force-answer guards |
+| `src/data_agent_baseline/agents/prompt.py` | System prompt, task context builder, reflection prompts |
+| `src/data_agent_baseline/agents/model.py` | Qwen3 thinking-mode adapter (`reasoning_content` extraction) |
+| `configs/eval.yaml` | Custom eval config |
+| `REACT_ANALYSIS.md` | Architecture analysis — strengths, weaknesses, ceiling |
+| `LEARNINGS.md` | Full competition retrospective (Chinese) |
+
+### Retrospective
+
+See [`LEARNINGS.md`](./LEARNINGS.md) for a full writeup covering: why I dropped the custom rule-classifier architecture in favor of ReAct, thinking-mode randomness, the double-edged sword of self-verification, and which prompt rules actually moved the needle.
+
+---
+
 ## Overview
 
 | Item | Value |
