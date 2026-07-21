@@ -25,69 +25,7 @@ from data_agent_baseline.run.runner import (
     run_single_task,
 )
 
-
-# ── 评分逻辑 ──────────────────────────────────────────────────────────────────
-
-def _normalize_value(v: str) -> str:
-    v = str(v).strip()
-    # 尝试数字归一化
-    try:
-        f = float(v)
-        if math.isnan(f) or math.isinf(f):
-            return v
-        return str(round(f, 2))
-    except (ValueError, TypeError):
-        return v
-
-
-def _load_csv_values(path: Path) -> list[tuple]:
-    """加载 CSV，返回归一化后的行集合（忽略列名）。"""
-    rows = []
-    with path.open(newline="", encoding="utf-8") as f:
-        reader = csv.reader(f)
-        header = next(reader, None)  # 跳过列名
-        for row in reader:
-            normalized = tuple(_normalize_value(v) for v in row)
-            rows.append(normalized)
-    return rows
-
-
-def score_task(prediction_path: Path, gold_path: Path) -> float:
-    """
-    Score = Recall - 0.5 * (Extra / Predicted)
-    - Recall = matched / gold_count
-    - Extra = predicted_count - matched
-    """
-    if not prediction_path.exists():
-        return 0.0
-
-    pred_rows = _load_csv_values(prediction_path)
-    gold_rows = _load_csv_values(gold_path)
-
-    if not gold_rows:
-        return 1.0 if not pred_rows else 0.0
-
-    # 多列行：比较整行；单列行：直接比较值
-    gold_set = list(gold_rows)
-    pred_list = list(pred_rows)
-
-    matched = 0
-    remaining_pred = list(pred_list)
-    for g_row in gold_set:
-        for i, p_row in enumerate(remaining_pred):
-            # 逐元素比较（忽略列顺序差异：先尝试原序，再尝试排序）
-            if p_row == g_row or tuple(sorted(p_row)) == tuple(sorted(g_row)):
-                matched += 1
-                remaining_pred.pop(i)
-                break
-
-    gold_count = len(gold_set)
-    pred_count = len(pred_list)
-    recall = matched / gold_count
-    extra = max(0, pred_count - matched)
-    penalty = 0.5 * (extra / pred_count) if pred_count > 0 else 0.0
-    score = max(0.0, recall - penalty)
-    return round(score, 4)
+from scoring import score_task
 
 
 # ── 主流程 ────────────────────────────────────────────────────────────────────
