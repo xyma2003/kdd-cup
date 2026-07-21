@@ -1,5 +1,7 @@
 # KDD Cup 2026 DataAgent-Bench — 竞赛复盘与学习总结
 
+> ⚠️ **架构说明**：本文档描述的是 `solvers/` 规则分类器架构（production 运行路径，`cli.py` 硬编码 `use_xyma=True`）。`REACT_ANALYSIS.md` 描述的 ReAct 架构是 `react` 分支引入的实验性架构，目前未在 production 调用，后续可继续优化。两个架构并存。
+
 ## 竞赛概述
 
 **比赛**：KDD Cup 2026 DataAgent-Bench  
