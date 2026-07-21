@@ -3,6 +3,8 @@
 > 分支：react  
 > 基于：官方基线 ReAct + zing 分支最佳实践  
 
+> ⚠️ **架构说明**：ReAct 是 `react` 分支引入的**实验性架构**，目前未在 production 调用（`cli.py` 硬编码 `use_xyma=True`，production 实际跑 `solvers/` 规则分类器架构）。本文件分析 ReAct 的设计思路与潜力，作为后续优化的参考。要切换到 ReAct，需将 `cli.py:144,237` 的 `use_xyma=True` 改为 `False`。
+
 ---
 
 ## 架构概述
