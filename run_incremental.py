@@ -8,9 +8,7 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import json
-import math
 import sys
 from pathlib import Path
 
@@ -25,49 +23,7 @@ from data_agent_baseline.run.runner import (
     run_single_task,
 )
 
-
-def _normalize_value(v: str) -> str:
-    v = str(v).strip()
-    try:
-        f = float(v)
-        if math.isnan(f) or math.isinf(f):
-            return v
-        return str(round(f, 2))
-    except (ValueError, TypeError):
-        return v
-
-
-def _load_csv_values(path: Path) -> list[tuple]:
-    rows = []
-    with path.open(newline="", encoding="utf-8") as f:
-        reader = csv.reader(f)
-        next(reader, None)
-        for row in reader:
-            rows.append(tuple(_normalize_value(v) for v in row))
-    return rows
-
-
-def score_task(prediction_path: Path, gold_path: Path) -> float:
-    if not prediction_path.exists():
-        return 0.0
-    pred_rows = _load_csv_values(prediction_path)
-    gold_rows = _load_csv_values(gold_path)
-    if not gold_rows:
-        return 1.0 if not pred_rows else 0.0
-    matched = 0
-    remaining_pred = list(pred_rows)
-    for g_row in gold_rows:
-        for i, p_row in enumerate(remaining_pred):
-            if p_row == g_row or tuple(sorted(p_row)) == tuple(sorted(g_row)):
-                matched += 1
-                remaining_pred.pop(i)
-                break
-    gold_count = len(gold_rows)
-    pred_count = len(pred_rows)
-    recall = matched / gold_count
-    extra = max(0, pred_count - matched)
-    penalty = 0.5 * (extra / pred_count) if pred_count > 0 else 0.0
-    return round(max(0.0, recall - penalty), 4)
+from scoring import score_task
 
 
 def main():
